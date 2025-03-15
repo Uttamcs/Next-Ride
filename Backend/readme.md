@@ -131,7 +131,7 @@ This endpoint is used to log in an existing user. It validates the input data, c
     ```
 
 - **Error Response**:
-  - **Code**: `401 Bad Request`
+  - **Code**: `400 Bad Request`
   - **Content**:
     ```json
     {
@@ -169,4 +169,83 @@ curl -X POST http://localhost:3300/users/login \
   "email": "john.doe@example.com",
   "password": "yourpassword"
 }'
+```
+
+### GET /users/profile
+
+#### Description
+This endpoint is used to get the profile of the authenticated user.
+
+#### Request
+- **URL**: `/users/profile`
+- **Method**: `GET`
+- **Headers**: 
+  - `Authorization: Bearer <token>`
+
+#### Response
+
+- **Success Response**:
+  - **Code**: `200 OK`
+  - **Content**:
+    ```json
+    {
+      "_id": "user_id",
+      "fullname": {
+        "firstName": "John",
+        "lastName": "Doe"
+      },
+      "email": "john.doe@example.com"
+    }
+    ```
+
+- **Error Response**:
+  - **Code**: `401 Unauthorized`
+  - **Content**:
+    ```json
+    {
+      "message": "Unauthorized"
+    }
+    ```
+
+#### Example
+```sh
+curl -X GET http://localhost:3300/users/profile \
+-H "Authorization: Bearer your_jwt_token"
+```
+
+### GET /users/logout
+
+#### Description
+This endpoint is used to log out the authenticated user. It clears the authentication token and blacklists it.
+
+#### Request
+- **URL**: `/users/logout`
+- **Method**: `GET`
+- **Headers**: 
+  - `Authorization: Bearer <token>`
+
+#### Response
+
+- **Success Response**:
+  - **Code**: `200 OK`
+  - **Content**:
+    ```json
+    {
+      "message": "Logged out successfully"
+    }
+    ```
+
+- **Error Response**:
+  - **Code**: `401 Unauthorized`
+  - **Content**:
+    ```json
+    {
+      "message": "Unauthorized"
+    }
+    ```
+
+#### Example
+```sh
+curl -X GET http://localhost:3300/users/logout \
+-H "Authorization: Bearer your_jwt_token"
 ```
