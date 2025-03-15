@@ -19,4 +19,10 @@ router.post(
   ]
   , userController.registerUser
 ); 
+
+router.post('/login', [
+  body('email').isEmail().withMessage('Invalid email'),
+  body('password').isLength({ min: 8, max: 20 }).withMessage('Password must be between 8 and 20 characters long')
+], userController.loginUser);
+
 module.exports = router;
