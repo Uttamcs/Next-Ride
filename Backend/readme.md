@@ -2,15 +2,19 @@
 
 ## Endpoints
 
-### POST /users/signup
+### User Endpoints
 
-#### Description
+#### POST /users/signup
+
+##### Description
+
 This endpoint is used to register a new user. It validates the input data, hashes the password, creates a new user in the database, and returns an authentication token along with the user details.
 
-#### Request
+##### Request
+
 - **URL**: `/users/signup`
 - **Method**: `POST`
-- **Headers**: 
+- **Headers**:
   - `Content-Type: application/json`
 - **Body**:
   ```json
@@ -27,6 +31,7 @@ This endpoint is used to register a new user. It validates the input data, hashe
 #### Response
 
 - **Success Response**:
+
   - **Code**: `201 Created`
   - **Content**:
     ```json
@@ -74,12 +79,14 @@ This endpoint is used to register a new user. It validates the input data, hashe
     ```
 
 #### Validation Rules
+
 - `email`: Must be a valid email address.
 - `fullname.firstName`: Must be between 3 and 20 characters long.
 - `fullname.lastName`: Must be between 3 and 20 characters long.
 - `password`: Must be between 8 and 20 characters long.
 
 #### Example
+
 ```sh
 curl -X POST http://localhost:3300/users/signup \
 -H "Content-Type: application/json" \
@@ -96,12 +103,14 @@ curl -X POST http://localhost:3300/users/signup \
 ### POST /users/login
 
 #### Description
+
 This endpoint is used to log in an existing user. It validates the input data, checks the user's credentials, and returns an authentication token along with the user details.
 
 #### Request
+
 - **URL**: `/users/login`
 - **Method**: `POST`
-- **Headers**: 
+- **Headers**:
   - `Content-Type: application/json`
 - **Body**:
   ```json
@@ -114,6 +123,7 @@ This endpoint is used to log in an existing user. It validates the input data, c
 #### Response
 
 - **Success Response**:
+
   - **Code**: `200 OK`
   - **Content**:
     ```json
@@ -158,10 +168,12 @@ This endpoint is used to log in an existing user. It validates the input data, c
     ```
 
 #### Validation Rules
+
 - `email`: Must be a valid email address.
 - `password`: Must be between 8 and 20 characters long.
 
 #### Example
+
 ```sh
 curl -X POST http://localhost:3300/users/login \
 -H "Content-Type: application/json" \
@@ -174,17 +186,20 @@ curl -X POST http://localhost:3300/users/login \
 ### GET /users/profile
 
 #### Description
+
 This endpoint is used to get the profile of the authenticated user.
 
 #### Request
+
 - **URL**: `/users/profile`
 - **Method**: `GET`
-- **Headers**: 
+- **Headers**:
   - `Authorization: Bearer <token>`
 
 #### Response
 
 - **Success Response**:
+
   - **Code**: `200 OK`
   - **Content**:
     ```json
@@ -208,6 +223,7 @@ This endpoint is used to get the profile of the authenticated user.
     ```
 
 #### Example
+
 ```sh
 curl -X GET http://localhost:3300/users/profile \
 -H "Authorization: Bearer your_jwt_token"
@@ -216,17 +232,20 @@ curl -X GET http://localhost:3300/users/profile \
 ### GET /users/logout
 
 #### Description
+
 This endpoint is used to log out the authenticated user. It clears the authentication token and blacklists it.
 
 #### Request
+
 - **URL**: `/users/logout`
 - **Method**: `GET`
-- **Headers**: 
+- **Headers**:
   - `Authorization: Bearer <token>`
 
 #### Response
 
 - **Success Response**:
+
   - **Code**: `200 OK`
   - **Content**:
     ```json
@@ -245,6 +264,7 @@ This endpoint is used to log out the authenticated user. It clears the authentic
     ```
 
 #### Example
+
 ```sh
 curl -X GET http://localhost:3300/users/logout \
 -H "Authorization: Bearer your_jwt_token"
@@ -253,12 +273,14 @@ curl -X GET http://localhost:3300/users/logout \
 ### POST /captains/signup
 
 #### Description
+
 This endpoint is used to register a new captain. It validates the input data, hashes the password, creates a new captain in the database, and returns an authentication token along with the captain details.
 
 #### Request
+
 - **URL**: `/captains/signup`
 - **Method**: `POST`
-- **Headers**: 
+- **Headers**:
   - `Content-Type: application/json`
 - **Body**:
   ```json
@@ -283,6 +305,7 @@ This endpoint is used to register a new captain. It validates the input data, ha
 #### Response
 
 - **Success Response**:
+
   - **Code**: `201 Created`
   - **Content**:
     ```json
@@ -368,6 +391,7 @@ This endpoint is used to register a new captain. It validates the input data, ha
     ```
 
 #### Validation Rules
+
 - `email`: Must be a valid email address.
 - `fullname.firstName`: Must be between 3 and 20 characters long.
 - `fullname.lastName`: Must be between 3 and 20 characters long.
@@ -380,6 +404,7 @@ This endpoint is used to register a new captain. It validates the input data, ha
 - `vehicleType`: Must be one of `car`, `bike`, or `auto`.
 
 #### Example
+
 ```sh
 curl -X POST http://localhost:3300/captains/signup \
 -H "Content-Type: application/json" \

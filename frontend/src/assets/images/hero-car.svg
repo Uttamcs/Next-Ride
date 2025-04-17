@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="500" height="300" viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="500" height="300" fill="#FFFFFF" rx="15" opacity="0.9"/>
+
+  <!-- Shadow -->
+  <ellipse cx="240" cy="250" rx="180" ry="20" fill="#000000" opacity="0.1"/>
+
+  <!-- Car Body -->
+  <path d="M100,200 L100,170 C100,150 120,130 150,130 L300,130 C340,130 360,150 370,170 L380,200 Z" fill="#FFDD00" stroke="#333333" stroke-width="2"/>
+
+  <!-- Car Top -->
+  <path d="M150,130 L180,90 L320,90 L350,130 Z" fill="#FFBB00" stroke="#333333" stroke-width="2"/>
+
+  <!-- Windows -->
+  <path d="M185,130 L190,100 L310,100 L315,130 Z" fill="#E1F5FE" stroke="#333333" stroke-width="1"/>
+
+  <!-- Car Details -->
+  <path d="M100,200 L380,200 L370,220 L110,220 Z" fill="#FFBB00" stroke="#333333" stroke-width="2"/>
+
+  <!-- Wheels -->
+  <circle cx="150" cy="220" r="30" fill="#333333" stroke="#000000" stroke-width="2"/>
+  <circle cx="150" cy="220" r="20" fill="#666666"/>
+  <circle cx="150" cy="220" r="10" fill="#999999"/>
+  <circle cx="150" cy="220" r="5" fill="#CCCCCC"/>
+
+  <circle cx="330" cy="220" r="30" fill="#333333" stroke="#000000" stroke-width="2"/>
+  <circle cx="330" cy="220" r="20" fill="#666666"/>
+  <circle cx="330" cy="220" r="10" fill="#999999"/>
+  <circle cx="330" cy="220" r="5" fill="#CCCCCC"/>
+
+  <!-- Headlights -->
+  <circle cx="110" cy="170" r="10" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1"/>
+  <circle cx="370" cy="170" r="10" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1"/>
+
+  <!-- Taxi Sign -->
+  <rect x="230" y="75" width="40" height="20" rx="5" fill="#FF3B30" stroke="#CC0000" stroke-width="1"/>
+  <text x="235" y="90" font-family="Arial" font-size="12" font-weight="bold" fill="#FFFFFF">TAXI</text>
+
+  <!-- Door Lines -->
+  <line x1="240" y1="130" x2="240" y2="200" stroke="#333333" stroke-width="2"/>
+
+  <!-- Windows Reflection -->
+  <path d="M195,105 L200,110 L300,110 L305,105" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+
+  <!-- Checkerboard Pattern -->
+  <g>
+    <rect x="120" y="150" width="10" height="10" fill="#000000"/>
+    <rect x="130" y="150" width="10" height="10" fill="#FFDD00"/>
+    <rect x="120" y="160" width="10" height="10" fill="#FFDD00"/>
+    <rect x="130" y="160" width="10" height="10" fill="#000000"/>
+
+    <rect x="340" y="150" width="10" height="10" fill="#000000"/>
+    <rect x="350" y="150" width="10" height="10" fill="#FFDD00"/>
+    <rect x="340" y="160" width="10" height="10" fill="#FFDD00"/>
+    <rect x="350" y="160" width="10" height="10" fill="#000000"/>
+  </g>
+</svg>
