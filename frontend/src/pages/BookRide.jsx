@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useRide } from "../context/RideContext";
 import { useCombinedAuth } from "../context/CombinedAuthContext";
 import { useThemeMode } from "../context/ThemeContext";
+import { toast } from "react-toastify";
 import MapComponent from "../components/Map";
 import {
   Box,
@@ -82,32 +83,67 @@ const BookRide = () => {
 
   const steps = ["Set Location", "Choose Ride", "Confirm & Pay"];
 
+  // Check if backend is running
+  const checkBackendConnection = async () => {
+    try {
+      const api = await import("../services/api").then(
+        (module) => module.default
+      );
+      const isConnected = await api.healthCheck();
+      console.log(
+        "Backend connection check:",
+        isConnected ? "Connected" : "Not connected"
+      );
+
+      if (!isConnected) {
+        setError(
+          "Cannot connect to the server. Please make sure the backend is running."
+        );
+      }
+
+      return isConnected;
+    } catch (error) {
+      console.error("Error checking backend connection:", error);
+      setError(
+        "Cannot connect to the server. Please make sure the backend is running."
+      );
+      return false;
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login", { state: { from: "/book-ride" } });
-    } else {
-      // Check if there's ride data passed from the home page
-      const tempRideData = localStorage.getItem("tempRideData");
-      if (tempRideData) {
-        try {
-          const { pickup, destination, rideType } = JSON.parse(tempRideData);
-          setOriginAddress(pickup);
-          setDestinationAddress(destination);
+      return;
+    }
 
-          // Clear the temp data after using it
-          localStorage.removeItem("tempRideData");
+    // Check backend connection
+    checkBackendConnection();
 
-          // Simulate a search for the addresses to get coordinates
+    // Check if there's ride data passed from the home page
+    const tempRideData = localStorage.getItem("tempRideData");
+    if (tempRideData) {
+      try {
+        const { pickup, destination, rideType } = JSON.parse(tempRideData);
+        console.log("Found temp ride data:", { pickup, destination, rideType });
+        setOriginAddress(pickup);
+        setDestinationAddress(destination);
+
+        // Clear the temp data after using it
+        localStorage.removeItem("tempRideData");
+
+        // Simulate a search for the addresses to get coordinates
+        setTimeout(() => {
+          handleAddressSearch("origin");
           setTimeout(() => {
-            handleAddressSearch("origin");
-            setTimeout(() => {
-              handleAddressSearch("destination");
-            }, 500);
+            handleAddressSearch("destination");
           }, 500);
-        } catch (error) {
-          console.error("Error parsing temp ride data:", error);
-        }
+        }, 500);
+      } catch (error) {
+        console.error("Error parsing temp ride data:", error);
       }
+    } else {
+      console.log("No temp ride data found");
     }
   }, [isAuthenticated, navigate]);
 
@@ -177,9 +213,26 @@ const BookRide = () => {
       setError(null);
       const selectedOption = rideOptions.find((option) => option.selected);
 
+      if (!origin || !destination) {
+        setError(
+          "Location coordinates are missing. Please try selecting your locations again."
+        );
+        return;
+      }
+
       // Get the distance and duration from the fare estimate
       const distance = fareEstimate ? parseFloat(fareEstimate.distance) : 5;
       const duration = fareEstimate ? fareEstimate.duration : 15;
+
+      // Log the data being sent for debugging
+      console.log("Preparing ride data with:", {
+        origin,
+        destination,
+        originAddress,
+        destinationAddress,
+        selectedOption,
+        paymentMethod,
+      });
 
       const rideData = {
         origin: {
@@ -201,7 +254,9 @@ const BookRide = () => {
       setLoading(true);
 
       // Request the ride
+      console.log("Sending ride request with data:", rideData);
       const response = await requestRide(rideData);
+      console.log("Ride request response:", response);
 
       // Show success message
       toast.success("Ride booked successfully! Redirecting to your rides...");
@@ -212,7 +267,23 @@ const BookRide = () => {
       }, 1500);
     } catch (error) {
       console.error("Error booking ride:", error);
-      setError(error.message || "Failed to book ride. Please try again.");
+
+      // Provide more specific error messages based on the error
+      if (error.isConnectionError) {
+        setError(
+          "Cannot connect to the server. Please check your internet connection or try again later."
+        );
+      } else if (error.message && error.message.includes("coordinates")) {
+        setError(
+          "Invalid location coordinates. Please try selecting your locations again."
+        );
+      } else if (error.message && error.message.includes("authentication")) {
+        setError("Authentication error. Please try logging in again.");
+        // Redirect to login after a delay
+        setTimeout(() => navigate("/login"), 3000);
+      } else {
+        setError(error.message || "Failed to book ride. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -245,17 +316,59 @@ const BookRide = () => {
     }
   };
 
-  // Geocode address to coordinates (simplified - in a real app, use a geocoding service)
-  const handleAddressSearch = (type) => {
-    // This is a placeholder - in a real app, you would use a geocoding service like Google Maps or Mapbox
-    const address = type === "origin" ? originAddress : destinationAddress;
-    console.log(`Searching for ${type} address: ${address}`);
+  // Geocode address to coordinates using Google Maps Geocoding API
+  const handleAddressSearch = async (type) => {
+    try {
+      const address = type === "origin" ? originAddress : destinationAddress;
+      console.log(`Searching for ${type} address: ${address}`);
 
+      if (!address) {
+        console.error(`No ${type} address provided`);
+        return;
+      }
+
+      // Use Google Maps Geocoding API if available
+      if (window.google && window.google.maps) {
+        const geocoder = new window.google.maps.Geocoder();
+        geocoder.geocode({ address }, (results, status) => {
+          if (status === "OK" && results && results.length > 0) {
+            const location = results[0].geometry.location;
+            const coords = {
+              latitude: location.lat(),
+              longitude: location.lng(),
+            };
+            console.log(`Found coordinates for ${type}:`, coords);
+
+            if (type === "origin") {
+              setOrigin(coords);
+            } else {
+              setDestination(coords);
+            }
+          } else {
+            console.error(`Geocoding failed for ${type} address:`, status);
+            // Fallback to random coordinates for demo purposes
+            fallbackToRandomCoordinates(type);
+          }
+        });
+      } else {
+        console.warn("Google Maps API not loaded, using fallback coordinates");
+        fallbackToRandomCoordinates(type);
+      }
+    } catch (error) {
+      console.error(`Error in handleAddressSearch for ${type}:`, error);
+      fallbackToRandomCoordinates(type);
+    }
+  };
+
+  // Fallback function to generate random coordinates
+  const fallbackToRandomCoordinates = (type) => {
     // For demo purposes, set random coordinates near New York City
     const baseCoords = {
       latitude: 40.7128 + (Math.random() - 0.5) * 0.1,
       longitude: -74.006 + (Math.random() - 0.5) * 0.1,
     };
+
+    console.log(`Using fallback coordinates for ${type}:`, baseCoords);
 
     if (type === "origin") {
       setOrigin(baseCoords);

@@ -2,7 +2,8 @@ import { createContext, useState, useEffect, useContext } from "react";
 import RideService from "../services/ride.service";
 import { useCombinedAuth } from "./CombinedAuthContext";
 import { toast } from "react-toastify";
-import io from "socket.io-client";
+import socketService from "../services/socket.service";
+import { isOfflineMode } from "../utils/offlineMode";
 
 const RideContext = createContext();
 
@@ -10,38 +11,18 @@ export const RideProvider = ({ children }) => {
   const [activeRide, setActiveRide] = useState(null);
   const [rideHistory, setRideHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [socket, setSocket] = useState(null);
   const { currentUser: user, isAuthenticated } = useCombinedAuth();
-
-  // Initialize socket connection
-  useEffect(() => {
-    if (isAuthenticated) {
-      const newSocket = io("http://localhost:3300", {
-        withCredentials: true,
-      });
-
-      setSocket(newSocket);
-
-      return () => {
-        newSocket.disconnect();
-      };
-    }
-  }, [isAuthenticated]);
 
   // Set up socket event listeners
   useEffect(() => {
-    if (socket && user) {
-      // Join user's room
-      socket.emit("join", { userId: user._id });
-
-      // Listen for ride updates
-      socket.on("rideUpdate", (updatedRide) => {
+    if (isAuthenticated && user) {
+      // Register event listeners for ride updates
+      socketService.on("ride_update", (updatedRide) => {
         setActiveRide(updatedRide);
-        toast.info(`Ride status updated: ${updatedRide.status}`);
       });
 
       // Listen for captain location updates
-      socket.on("captainLocation", (location) => {
+      socketService.on("captain_location", (location) => {
         setActiveRide((prev) => {
           if (!prev) return null;
           return {
@@ -51,23 +32,22 @@ export const RideProvider = ({ children }) => {
         });
       });
 
-      // Listen for new ride requests
-      socket.on("rideRequest", (ride) => {
-        setActiveRide(ride);
-        toast.info("New ride request created!");
-      });
+      // Join user's room
+      if (socketService.isConnected) {
+        socketService.emit("join_room", { userId: user._id, userType: "user" });
+      }
 
+      // Cleanup on unmount
       return () => {
-        socket.off("rideUpdate");
-        socket.off("captainLocation");
-        socket.off("rideRequest");
+        socketService.off("ride_update");
+        socketService.off("captain_location");
       };
     }
-  }, [socket, user]);
+  }, [isAuthenticated, user]);
 
   // Fetch active ride on mount
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isOfflineMode()) {
       const loadActiveRide = async () => {
         try {
           await fetchActiveRide();
@@ -80,10 +60,21 @@ export const RideProvider = ({ children }) => {
       };
 
       loadActiveRide();
+    } else if (isAuthenticated && isOfflineMode()) {
+      console.log("App is in offline mode. Skipping active ride fetch.");
+      // Set a mock empty state for offline mode
+      setActiveRide(null);
     }
   }, [isAuthenticated]);
 
   const fetchActiveRide = async () => {
+    // Skip API call if in offline mode
+    if (isOfflineMode()) {
+      console.log("App is in offline mode. Returning mock empty ride.");
+      setActiveRide(null);
+      return;
+    }
+
     try {
       setLoading(true);
       const data = await RideService.getActiveRide();
@@ -91,7 +82,11 @@ export const RideProvider = ({ children }) => {
     } catch (error) {
       console.error("Error fetching active ride:", error);
       // No active ride is not an error
-      if (error.response?.status !== 404) {
+      if (error.status === 404 || error.response?.status === 404) {
+        console.log("No active ride found");
+        setActiveRide(null);
+      } else {
+        // Only show toast for non-404 errors
         toast.error("Failed to fetch active ride");
       }
     } finally {
@@ -100,6 +95,14 @@ export const RideProvider = ({ children }) => {
   };
 
   const fetchRideHistory = async () => {
+    // Return mock data if in offline mode
+    if (isOfflineMode()) {
+      console.log("App is in offline mode. Returning mock ride history.");
+      const mockRideHistory = { rides: [] };
+      setRideHistory(mockRideHistory);
+      return mockRideHistory;
+    }
+
     try {
       setLoading(true);
       const data = await RideService.getRideHistory();
@@ -123,13 +126,46 @@ export const RideProvider = ({ children }) => {
 
   const requestRide = async (rideData) => {
     try {
+      // Validate ride data before making the API call
+      if (!rideData.origin || !rideData.destination) {
+        const error = new Error(
+          "Origin and destination coordinates are required"
+        );
+        console.error("Ride data validation failed:", error);
+        throw error;
+      }
+
+      if (!rideData.origin.coordinates || !rideData.destination.coordinates) {
+        const error = new Error("Invalid coordinates format");
+        console.error("Ride data validation failed:", error);
+        throw error;
+      }
+
+      console.log("RideContext: Requesting ride with data:", rideData);
       setLoading(true);
+
       const data = await RideService.requestRide(rideData);
+      console.log("RideContext: Ride request successful:", data);
+
       setActiveRide(data.ride);
       toast.success("Ride requested successfully!");
       return data.ride;
     } catch (error) {
-      toast.error(error.message || "Failed to request ride");
+      console.error("RideContext: Error requesting ride:", error);
+
+      // Provide more specific error messages
+      if (error.isConnectionError) {
+        toast.error(
+          "Cannot connect to the server. Please check your internet connection."
+        );
+      } else if (error.message && error.message.includes("coordinates")) {
+        toast.error("Invalid location coordinates. Please try again.");
+      } else if (error.message && error.message.includes("authentication")) {
+        toast.error("Authentication error. Please try logging in again.");
+      } else {
+        toast.error(error.message || "Failed to request ride");
+      }
+
       throw error;
     } finally {
       setLoading(false);

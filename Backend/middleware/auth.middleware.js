@@ -6,7 +6,6 @@ const jwt = require("jsonwebtoken");
 
 // Authenticate user middleware
 module.exports.authUser = async (req, res, next) => {
-  console.log("User auth middleware triggered");
 
   const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
   if (!token) {

@@ -1,9 +1,4 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import {
   ThemeProvider as MuiThemeProvider,
   createTheme,
@@ -34,15 +29,11 @@ import RideDetails from "./pages/RideDetails";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import NotFound from "./pages/NotFound";
+import CaptainRegister from "./pages/CaptainRegister";
+import CaptainDashboard from "./pages/CaptainDashboard";
 
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
+// Import ProtectedRoute component
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Theme configuration
 const getTheme = (mode) =>
@@ -340,10 +331,32 @@ const getTheme = (mode) =>
     },
   });
 
+import { useEffect } from "react";
+import socketService from "./services/socket.service";
+
 // AppContent component to use the theme context
 const AppContent = () => {
   const { mode } = useThemeMode();
   const theme = getTheme(mode);
+
+  // Initialize socket connection when the app loads
+  useEffect(() => {
+    // Check if we're in offline mode
+    const token = localStorage.getItem("token");
+    const isOfflineMode = token && token.startsWith("mock-");
+
+    if (!isOfflineMode) {
+      // Initialize socket connection only if not in offline mode
+      socketService.init();
+
+      // Cleanup on unmount
+      return () => {
+        socketService.disconnect();
+      };
+    } else {
+      console.log("App is in offline mode. Skipping socket initialization.");
+    }
+  }, []);
 
   return (
     <MuiThemeProvider theme={theme}>
@@ -358,6 +371,7 @@ const AppContent = () => {
               <Route path="/services" element={<Services />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/captain-register" element={<CaptainRegister />} />
               <Route
                 path="/dashboard"
                 element={
@@ -403,6 +417,14 @@ const AppContent = () => {
                 element={
                   <ProtectedRoute>
                     <RideDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/captain/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <CaptainDashboard />
                   </ProtectedRoute>
                 }
               />

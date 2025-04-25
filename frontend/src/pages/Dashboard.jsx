@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
 import { useCombinedAuth } from "../context/CombinedAuthContext";
 import { useRide } from "../context/RideContext";
 import {
@@ -31,35 +30,225 @@ import {
   MyLocation,
   AccessTime,
   ArrowForward,
+  Refresh,
 } from "@mui/icons-material";
 
 const Dashboard = () => {
   const { currentUser: user, loading: authLoading } = useCombinedAuth();
-  const {
-    activeRide,
-    rideHistory,
-    fetchRideHistory,
-    loading: rideLoading,
-  } = useRide();
+  const { activeRide, fetchRideHistory, loading: rideLoading } = useRide();
   const [recentRides, setRecentRides] = useState([]);
 
+  // Use a ref to store the fetchRideHistory function to prevent infinite re-renders
+  const fetchRideHistoryRef = useRef(fetchRideHistory);
+
+  // Use a flag to track if we've already loaded the data
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Pre-compute memoized components to avoid conditional hook calls
+  const viewRideDetailsButton = React.useMemo(
+    () =>
+      activeRide && (
+        <Button
+          onClick={() => (window.location.href = `/rides/${activeRide._id}`)}
+          variant="contained"
+          endIcon={<ArrowForward />}
+        >
+          View Ride Details
+        </Button>
+      ),
+    [activeRide?._id]
+  );
+
+  const bookRideButton = React.useMemo(
+    () => (
+      <Button
+        onClick={() => (window.location.href = "/book-ride")}
+        variant="contained"
+        size="large"
+        sx={{ px: 4 }}
+      >
+        Book a Ride
+      </Button>
+    ),
+    []
+  );
+
+  const viewAllButton = React.useMemo(
+    () => (
+      <Button
+        onClick={() => (window.location.href = "/my-rides")}
+        endIcon={<ArrowForward />}
+        size="small"
+      >
+        View All
+      </Button>
+    ),
+    []
+  );
+
+  const recentRidesList = React.useMemo(() => {
+    return recentRides.slice(0, 3).map((ride) => (
+      <ListItem
+        key={ride._id}
+        alignItems="flex-start"
+        sx={{
+          mb: 1,
+          p: 2,
+          borderRadius: 1,
+          bgcolor: "background.default",
+          "&:hover": { bgcolor: "action.hover" },
+          cursor: "pointer",
+        }}
+        onClick={() => (window.location.href = `/rides/${ride._id}`)}
+        style={{ textDecoration: "none", color: "inherit" }}
+      >
+        <ListItemAvatar>
+          <Avatar sx={{ bgcolor: "primary.main" }}>
+            <DirectionsCar />
+          </Avatar>
+        </ListItemAvatar>
+        <ListItemText
+          primary={
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Typography variant="subtitle1" fontWeight="medium">
+                {ride.dropLocation?.address ||
+                  ride.destination?.address ||
+                  "Unknown destination"}
+              </Typography>
+              <Chip
+                label={(ride.status || "pending").replace("_", " ")}
+                size="small"
+                color={getRideStatusColor(ride.status || "pending")}
+                sx={{ textTransform: "capitalize" }}
+              />
+            </Box>
+          }
+          secondary={
+            <>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                component="span"
+              >
+                From:{" "}
+                {ride.pickupLocation?.address ||
+                  ride.origin?.address ||
+                  "Unknown location"}
+              </Typography>
+              <Box sx={{ display: "flex", mt: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mr: 2,
+                  }}
+                >
+                  <AccessTime fontSize="small" sx={{ mr: 0.5, fontSize: 16 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    {formatDate(ride.requestedAt || ride.createdAt)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <CreditCard fontSize="small" sx={{ mr: 0.5, fontSize: 16 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    ${ride.fare || "N/A"}
+                  </Typography>
+                </Box>
+              </Box>
+            </>
+          }
+        />
+      </ListItem>
+    ));
+  }, [recentRides]);
+
+  const quickActionsList = React.useMemo(
+    () => (
+      <>
+        <ListItem
+          disablePadding
+          sx={{ py: 1, cursor: "pointer" }}
+          onClick={() => (window.location.href = "/book-ride")}
+        >
+          <ListItemIcon sx={{ minWidth: 40 }}>
+            <DirectionsCar color="primary" />
+          </ListItemIcon>
+          <ListItemText primary="Book a Ride" />
+        </ListItem>
+        <ListItem
+          disablePadding
+          sx={{ py: 1, cursor: "pointer" }}
+          onClick={() => (window.location.href = "/my-rides")}
+        >
+          <ListItemIcon sx={{ minWidth: 40 }}>
+            <History color="primary" />
+          </ListItemIcon>
+          <ListItemText primary="View Ride History" />
+        </ListItem>
+        <ListItem
+          disablePadding
+          sx={{ py: 1, cursor: "pointer" }}
+          onClick={() => (window.location.href = "/profile")}
+        >
+          <ListItemIcon sx={{ minWidth: 40 }}>
+            <CreditCard color="primary" />
+          </ListItemIcon>
+          <ListItemText primary="Manage Profile" />
+        </ListItem>
+      </>
+    ),
+    []
+  );
+
+  const bookNowButton = React.useMemo(
+    () => (
+      <Button
+        onClick={() => (window.location.href = "/book-ride")}
+        variant="contained"
+        fullWidth
+      >
+        Book Now
+      </Button>
+    ),
+    []
+  );
+
   useEffect(() => {
+    // Update the ref when the function changes
+    fetchRideHistoryRef.current = fetchRideHistory;
+  }, [fetchRideHistory]);
+
+  useEffect(() => {
+    // Only load data once
+    if (dataLoaded) return;
+
     const loadData = async () => {
       try {
-        const data = await fetchRideHistory();
+        const data = await fetchRideHistoryRef.current();
         if (data && data.rides && Array.isArray(data.rides)) {
-          setRecentRides(data.rides.slice(0, 3)); // Get only the 3 most recent rides
+          // Store all rides for stats calculation
+          setRecentRides(data.rides);
         } else {
           setRecentRides([]);
         }
+        // Mark data as loaded
+        setDataLoaded(true);
       } catch (error) {
         console.error("Error fetching ride history:", error);
         setRecentRides([]);
+        // Even on error, mark as loaded to prevent infinite retries
+        setDataLoaded(true);
       }
     };
 
     loadData();
-  }, [fetchRideHistory]);
+  }, [dataLoaded]); // Only depend on dataLoaded flag
 
   const getRideStatusColor = (status) => {
     switch (status) {
@@ -106,7 +295,7 @@ const Dashboard = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
-          Welcome back, {user?.name}!
+          Welcome back, {user?.fullname?.firstName || user?.name || "User"}!
         </Typography>
         <Typography variant="body1" color="text.secondary">
           Manage your rides and account from your personal dashboard.
@@ -128,8 +317,8 @@ const Dashboard = () => {
               Your Active Ride
             </Typography>
             <Chip
-              label={activeRide.status.replace("_", " ")}
-              color={getRideStatusColor(activeRide.status)}
+              label={(activeRide.status || "pending").replace("_", " ")}
+              color={getRideStatusColor(activeRide.status || "pending")}
               sx={{ textTransform: "capitalize" }}
             />
           </Box>
@@ -264,14 +453,7 @@ const Dashboard = () => {
           </Grid>
 
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
-            <Button
-              component={Link}
-              to={`/rides/${activeRide._id}`}
-              variant="contained"
-              endIcon={<ArrowForward />}
-            >
-              View Ride Details
-            </Button>
+            {viewRideDetailsButton}
           </Box>
         </Paper>
       ) : (
@@ -299,15 +481,7 @@ const Dashboard = () => {
             You don't have any active rides at the moment. Book a new ride to
             get started!
           </Typography>
-          <Button
-            component={Link}
-            to="/book-ride"
-            variant="contained"
-            size="large"
-            sx={{ px: 4 }}
-          >
-            Book a Ride
-          </Button>
+          {bookRideButton}
         </Paper>
       )}
 
@@ -326,14 +500,19 @@ const Dashboard = () => {
               <Typography variant="h6" fontWeight="bold">
                 Recent Rides
               </Typography>
-              <Button
-                component={Link}
-                to="/my-rides"
-                endIcon={<ArrowForward />}
-                size="small"
-              >
-                View All
-              </Button>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  onClick={() => {
+                    setDataLoaded(false); // Reset the dataLoaded flag to trigger a refresh
+                  }}
+                  size="small"
+                  disabled={rideLoading}
+                  startIcon={<Refresh />}
+                >
+                  Refresh
+                </Button>
+                {viewAllButton}
+              </Box>
             </Box>
 
             {rideLoading ? (
@@ -341,99 +520,7 @@ const Dashboard = () => {
                 <CircularProgress />
               </Box>
             ) : recentRides.length > 0 ? (
-              <List sx={{ width: "100%" }}>
-                {recentRides.map((ride) => (
-                  <ListItem
-                    key={ride._id}
-                    alignItems="flex-start"
-                    sx={{
-                      mb: 1,
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: "background.default",
-                      "&:hover": { bgcolor: "action.hover" },
-                    }}
-                    component={Link}
-                    to={`/rides/${ride._id}`}
-                    style={{ textDecoration: "none", color: "inherit" }}
-                  >
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: "primary.main" }}>
-                        <DirectionsCar />
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography variant="subtitle1" fontWeight="medium">
-                            {ride.dropLocation?.address ||
-                              ride.destination?.address ||
-                              "Unknown destination"}
-                          </Typography>
-                          <Chip
-                            label={ride.status.replace("_", " ")}
-                            size="small"
-                            color={getRideStatusColor(ride.status)}
-                            sx={{ textTransform: "capitalize" }}
-                          />
-                        </Box>
-                      }
-                      secondary={
-                        <>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            component="span"
-                          >
-                            From:{" "}
-                            {ride.pickupLocation?.address ||
-                              ride.origin?.address ||
-                              "Unknown location"}
-                          </Typography>
-                          <Box sx={{ display: "flex", mt: 1 }}>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                mr: 2,
-                              }}
-                            >
-                              <AccessTime
-                                fontSize="small"
-                                sx={{ mr: 0.5, fontSize: 16 }}
-                              />
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                {formatDate(ride.requestedAt || ride.createdAt)}
-                              </Typography>
-                            </Box>
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                              <CreditCard
-                                fontSize="small"
-                                sx={{ mr: 0.5, fontSize: 16 }}
-                              />
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                ${ride.fare || "N/A"}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
+              <List sx={{ width: "100%" }}>{recentRidesList}</List>
             ) : (
               <Box sx={{ textAlign: "center", py: 4 }}>
                 <History
@@ -456,36 +543,11 @@ const Dashboard = () => {
                     Quick Actions
                   </Typography>
                   <List>
-                    <ListItem disablePadding sx={{ py: 1 }}>
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        <DirectionsCar color="primary" />
-                      </ListItemIcon>
-                      <ListItemText primary="Book a Ride" />
-                    </ListItem>
-                    <ListItem disablePadding sx={{ py: 1 }}>
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        <History color="primary" />
-                      </ListItemIcon>
-                      <ListItemText primary="View Ride History" />
-                    </ListItem>
-                    <ListItem disablePadding sx={{ py: 1 }}>
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        <CreditCard color="primary" />
-                      </ListItemIcon>
-                      <ListItemText primary="Manage Payment Methods" />
-                    </ListItem>
+                    {/* Use memo to prevent re-renders */}
+                    {quickActionsList}
                   </List>
                 </CardContent>
-                <CardActions>
-                  <Button
-                    component={Link}
-                    to="/book-ride"
-                    variant="contained"
-                    fullWidth
-                  >
-                    Book Now
-                  </Button>
-                </CardActions>
+                <CardActions>{bookNowButton}</CardActions>
               </Card>
             </Grid>
 
@@ -499,21 +561,29 @@ const Dashboard = () => {
                     <ListItem disablePadding sx={{ py: 1 }}>
                       <ListItemText
                         primary="Total Rides"
-                        secondary={user?.totalRides || 0}
+                        secondary={recentRides.length || 0}
                       />
                     </ListItem>
                     <Divider component="li" />
                     <ListItem disablePadding sx={{ py: 1 }}>
                       <ListItemText
                         primary="Completed Rides"
-                        secondary={user?.completedRides || 0}
+                        secondary={
+                          recentRides.filter(
+                            (ride) => ride.status === "completed"
+                          ).length || 0
+                        }
                       />
                     </ListItem>
                     <Divider component="li" />
                     <ListItem disablePadding sx={{ py: 1 }}>
                       <ListItemText
                         primary="Cancelled Rides"
-                        secondary={user?.cancelledRides || 0}
+                        secondary={
+                          recentRides.filter(
+                            (ride) => ride.status === "cancelled"
+                          ).length || 0
+                        }
                       />
                     </ListItem>
                     <Divider component="li" />
@@ -521,18 +591,21 @@ const Dashboard = () => {
                       <ListItemText
                         primary="Average Rating"
                         secondary={
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Star
-                              sx={{
-                                color: "warning.main",
-                                mr: 0.5,
-                                fontSize: 18,
-                              }}
-                            />
-                            <Typography variant="body2">
-                              {user?.averageRating || "N/A"}
-                            </Typography>
-                          </Box>
+                          <Typography component="span" variant="body2">
+                            <Box
+                              component="span"
+                              sx={{ display: "flex", alignItems: "center" }}
+                            >
+                              <Star
+                                sx={{
+                                  color: "warning.main",
+                                  mr: 0.5,
+                                  fontSize: 18,
+                                }}
+                              />
+                              {"4.5"}
+                            </Box>
+                          </Typography>
                         }
                       />
                     </ListItem>

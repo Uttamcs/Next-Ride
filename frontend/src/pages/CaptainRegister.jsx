@@ -162,29 +162,34 @@ const CaptainRegister = () => {
 
     try {
       // Call register with properly formatted data
-      await register({
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        vehicleType: formData.vehicleType,
-        vehicleNumber: formData.vehicleNumber.trim(),
-        vehicleColor: formData.vehicleColor.trim(),
-        capacity: parseInt(formData.capacity),
-        phone: formData.phone.replace(/[^0-9]/g, ""), // Remove non-numeric characters
-      }, "captain");
+      await register(
+        {
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          email: formData.email.trim(),
+          password: formData.password,
+          vehicleType: formData.vehicleType,
+          vehicleNumber: formData.vehicleNumber.trim(),
+          vehicleColor: formData.vehicleColor.trim(),
+          capacity: parseInt(formData.capacity),
+          phone: formData.phone.replace(/[^0-9]/g, ""), // Remove non-numeric characters
+        },
+        "captain"
+      );
       // Navigation is handled in the register function in CombinedAuthContext
     } catch (err) {
       console.error("Registration error:", err);
 
       // Handle connection errors with more helpful messages
       if (
-        err.message &&
-        (err.message.includes("connect to server") ||
-          err.message.includes("No response from server"))
+        err.isConnectionError ||
+        (err.message &&
+          (err.message.includes("connect to server") ||
+            err.message.includes("No response from server") ||
+            err.message.includes("Network error")))
       ) {
         setServerError(
-          "Cannot connect to the server. Please make sure the backend server is running at http://localhost:3300"
+          "Cannot connect to the server. The application will work in offline mode."
         );
         setIsConnectionError(true);
         return;

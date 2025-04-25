@@ -1,15 +1,16 @@
-import React from 'react';
-import { Box, Typography, Paper, Button } from '@mui/material';
-import { Link } from 'react-router-dom';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import React from "react";
+import { Box, Typography, Paper, Button, Alert } from "@mui/material";
+import { Link } from "react-router-dom";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import CloudOffIcon from "@mui/icons-material/CloudOff";
 
 const ServerConnectionError = ({ message }) => {
   return (
     <Box
       sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
         p: 3,
         mt: 2,
       }}
@@ -19,47 +20,49 @@ const ServerConnectionError = ({ message }) => {
         sx={{
           p: 4,
           maxWidth: 600,
-          textAlign: 'center',
+          textAlign: "center",
           borderRadius: 2,
-          border: '1px solid #f44336',
+          border: "1px solid #ed6c02", // warning color
         }}
       >
-        <ErrorOutlineIcon color="error" sx={{ fontSize: 60, mb: 2 }} />
-        <Typography variant="h5" color="error" gutterBottom>
-          Server Connection Error
+        <CloudOffIcon color="warning" sx={{ fontSize: 60, mb: 2 }} />
+        <Typography variant="h5" color="warning.main" gutterBottom>
+          Offline Mode
         </Typography>
+
+        <Alert severity="info" sx={{ mb: 3, textAlign: "left" }}>
+          The application is running in offline mode. You can still use most
+          features, but data will not be synchronized with the server until
+          connection is restored.
+        </Alert>
+
         <Typography variant="body1" paragraph>
-          {message || 'Cannot connect to the server. Please make sure the backend server is running.'}
+          {message ||
+            "Cannot connect to the server. The application will work in offline mode."}
         </Typography>
+
         <Typography variant="body2" sx={{ mb: 3 }}>
-          To start the backend server, open a terminal and run:
-          <Box
-            component="pre"
-            sx={{
-              bgcolor: 'background.paper',
-              p: 2,
-              mt: 1,
-              borderRadius: 1,
-              border: '1px solid',
-              borderColor: 'divider',
-              textAlign: 'left',
-              overflowX: 'auto',
-            }}
-          >
-            cd Backend
-            npm run dev
-          </Box>
+          You can continue using the application in offline mode or try to
+          reconnect to the server.
         </Typography>
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
+        <Box sx={{ mt: 3, display: "flex", justifyContent: "center", gap: 2 }}>
           <Button component={Link} to="/" variant="outlined">
             Return to Home
           </Button>
           <Button
             variant="contained"
-            color="primary"
+            color="warning"
             onClick={() => window.location.reload()}
           >
-            Try Again
+            Try to Reconnect
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            component={Link}
+            to="/login"
+          >
+            Continue in Offline Mode
           </Button>
         </Box>
       </Paper>

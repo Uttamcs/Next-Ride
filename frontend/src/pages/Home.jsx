@@ -28,6 +28,7 @@ import MyLocationIcon from "@mui/icons-material/MyLocation";
 import LocationSearchingIcon from "@mui/icons-material/LocationSearching";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 // No assets needed
 
@@ -174,19 +175,39 @@ const Home = () => {
                     size="large"
                     sx={{
                       bgcolor: "secondary.main",
-                      px: 4,
-                      py: 1.5,
-                      fontSize: "1rem",
+                      px: 5,
+                      py: 1.8,
+                      fontSize: "1.1rem",
                       fontWeight: "bold",
-                      boxShadow: "0 4px 14px rgba(255, 107, 0, 0.4)",
+                      boxShadow: "0 8px 20px rgba(255, 107, 0, 0.5)",
+                      borderRadius: "30px",
+                      position: "relative",
+                      overflow: "hidden",
+                      "&::before": {
+                        content: '""',
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        background:
+                          "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)",
+                        transform: "translateX(-100%)",
+                        transition: "transform 0.8s ease",
+                      },
                       "&:hover": {
                         bgcolor: "secondary.dark",
-                        boxShadow: "0 6px 20px rgba(255, 107, 0, 0.6)",
-                        transform: "translateY(-3px)",
+                        boxShadow: "0 10px 25px rgba(255, 107, 0, 0.7)",
+                        transform: "translateY(-5px) scale(1.03)",
+                        "&::before": {
+                          transform: "translateX(100%)",
+                        },
                       },
+                      transition:
+                        "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
                     }}
                   >
-                    Get Started
+                    Get Started Now
                   </Button>
                   <Button
                     component={Link}
@@ -262,7 +283,7 @@ const Home = () => {
                 }}
               >
                 <Typography
-                  variant="h5"
+                  variant="h4"
                   component="h3"
                   fontWeight="bold"
                   gutterBottom
@@ -275,7 +296,19 @@ const Home = () => {
                     backgroundClip: "text",
                     color: "transparent",
                     textShadow: "0 2px 10px rgba(53, 99, 233, 0.2)",
-                    fontSize: { xs: "1.5rem", md: "1.75rem" },
+                    fontSize: { xs: "1.75rem", md: "2rem" },
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      bottom: -8,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "80px",
+                      height: "4px",
+                      background:
+                        "linear-gradient(90deg, #3563E9 0%, #6366F1 100%)",
+                      borderRadius: "2px",
+                    },
                   }}
                 >
                   Book Your Ride Now
@@ -585,16 +618,34 @@ const Home = () => {
                     fullWidth
                     variant="contained"
                     size="large"
+                    startIcon={
+                      <Box
+                        sx={{
+                          bgcolor: "rgba(255, 255, 255, 0.2)",
+                          borderRadius: "50%",
+                          width: 32,
+                          height: 32,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <DirectionsCarIcon sx={{ fontSize: 18 }} />
+                      </Box>
+                    }
                     sx={{
-                      py: 2,
-                      borderRadius: 2,
+                      py: 2.5,
+                      mt: 2,
+                      borderRadius: 3,
                       background:
                         "linear-gradient(90deg, #3563E9 0%, #6366F1 100%)",
-                      boxShadow: "0 8px 16px rgba(53, 99, 233, 0.3)",
-                      fontSize: "1.1rem",
+                      boxShadow: "0 10px 20px rgba(53, 99, 233, 0.4)",
+                      fontSize: "1.2rem",
                       fontWeight: "bold",
                       position: "relative",
                       overflow: "hidden",
+                      textTransform: "none",
+                      letterSpacing: "0.5px",
                       "&::before": {
                         content: '""',
                         position: "absolute",
@@ -603,23 +654,24 @@ const Home = () => {
                         width: "100%",
                         height: "100%",
                         background:
-                          "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)",
+                          "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)",
                         transform: "translateX(-100%)",
-                        transition: "transform 0.6s ease",
+                        transition: "transform 0.8s ease",
                       },
                       "&:hover": {
                         background:
                           "linear-gradient(90deg, #2D50C7 0%, #5457D6 100%)",
-                        boxShadow: "0 10px 25px rgba(53, 99, 233, 0.5)",
-                        transform: "translateY(-3px)",
+                        boxShadow: "0 15px 30px rgba(53, 99, 233, 0.6)",
+                        transform: "translateY(-5px) scale(1.02)",
                         "&::before": {
                           transform: "translateX(100%)",
                         },
                       },
-                      transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)",
+                      transition:
+                        "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
                     }}
                   >
-                    Find a Ride
+                    Find My Ride Now
                   </Button>
                 </form>
               </Paper>
@@ -757,27 +809,31 @@ const Home = () => {
                   sx={{
                     bgcolor: "rgba(255, 255, 255, 0.2)",
                     borderRadius: "50%",
-                    width: 28,
-                    height: 28,
+                    width: 32,
+                    height: 32,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     ml: 0.5,
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.3)",
                   }}
                 >
                   <ArrowForwardIcon sx={{ fontSize: 18 }} />
                 </Box>
               }
               sx={{
-                px: 4,
-                py: 1.8,
-                borderRadius: 3,
+                px: 5,
+                py: 2,
+                borderRadius: "50px",
                 background: "linear-gradient(90deg, #3563E9 0%, #6366F1 100%)",
-                boxShadow: "0 10px 20px rgba(99,102,241,0.3)",
-                fontSize: "1.1rem",
+                boxShadow: "0 10px 25px rgba(99,102,241,0.4)",
+                fontSize: "1.2rem",
                 fontWeight: "bold",
                 position: "relative",
                 overflow: "hidden",
+                textTransform: "none",
+                letterSpacing: "0.5px",
+                border: "2px solid rgba(255, 255, 255, 0.1)",
                 "&::before": {
                   content: '""',
                   position: "absolute",
@@ -786,23 +842,23 @@ const Home = () => {
                   width: "100%",
                   height: "100%",
                   background:
-                    "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)",
+                    "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)",
                   transform: "translateX(-100%)",
-                  transition: "transform 0.6s ease",
+                  transition: "transform 0.8s ease",
                 },
                 "&:hover": {
                   background:
                     "linear-gradient(90deg, #2D50C7 0%, #5457D6 100%)",
-                  boxShadow: "0 15px 30px rgba(99,102,241,0.5)",
-                  transform: "translateY(-5px)",
+                  boxShadow: "0 15px 35px rgba(99,102,241,0.6)",
+                  transform: "translateY(-7px) scale(1.05)",
                   "&::before": {
                     transform: "translateX(100%)",
                   },
                 },
-                transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)",
+                transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
               }}
             >
-              Start Your Journey
+              Start Your Journey Today
             </Button>
           </Box>
         </Container>
@@ -1132,32 +1188,35 @@ const Home = () => {
               startIcon={
                 <Box
                   sx={{
-                    bgcolor: "rgba(255, 255, 255, 0.25)",
+                    bgcolor: "rgba(255, 255, 255, 0.3)",
                     borderRadius: "50%",
-                    width: 32,
-                    height: 32,
+                    width: 38,
+                    height: 38,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    mr: 1,
-                    boxShadow: "0 2px 8px rgba(255, 107, 0, 0.3)",
+                    mr: 1.5,
+                    boxShadow: "0 4px 12px rgba(255, 107, 0, 0.4)",
+                    border: "2px solid rgba(255, 255, 255, 0.2)",
                   }}
                 >
-                  <DirectionsCarIcon sx={{ fontSize: 18, color: "white" }} />
+                  <DirectionsCarIcon sx={{ fontSize: 20, color: "white" }} />
                 </Box>
               }
               sx={{
-                px: 4,
-                py: 2,
+                px: 5,
+                py: 2.2,
                 background: "linear-gradient(90deg, #FF6B00 0%, #FF9248 100%)",
                 color: "white",
-                borderRadius: 3,
+                borderRadius: "50px",
                 fontWeight: "bold",
-                fontSize: "1.1rem",
-                boxShadow: "0 10px 25px rgba(255, 107, 0, 0.3)",
+                fontSize: "1.25rem",
+                boxShadow: "0 15px 30px rgba(255, 107, 0, 0.4)",
                 position: "relative",
                 overflow: "hidden",
                 border: "none",
+                textTransform: "none",
+                letterSpacing: "0.5px",
                 "&::before": {
                   content: '""',
                   position: "absolute",
@@ -1166,20 +1225,20 @@ const Home = () => {
                   width: "100%",
                   height: "100%",
                   background:
-                    "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)",
+                    "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)",
                   transform: "translateX(-100%)",
-                  transition: "transform 0.6s ease",
+                  transition: "transform 0.8s ease",
                 },
                 "&:hover": {
                   background:
                     "linear-gradient(90deg, #E05A00 0%, #FF6B00 100%)",
-                  boxShadow: "0 15px 35px rgba(255, 107, 0, 0.4)",
-                  transform: "translateY(-5px)",
+                  boxShadow: "0 20px 40px rgba(255, 107, 0, 0.5)",
+                  transform: "translateY(-8px) scale(1.05)",
                   "&::before": {
                     transform: "translateX(100%)",
                   },
                 },
-                transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)",
+                transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
               }}
             >
               Book a Ride Now
@@ -1273,43 +1332,181 @@ const Home = () => {
           bgcolor:
             theme.palette.mode === "light" ? "primary.main" : "dark.main",
           color: "white",
-          py: { xs: 6, md: 8 },
+          py: { xs: 8, md: 12 },
+          position: "relative",
+          overflow: "hidden",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundImage:
+              "radial-gradient(circle, rgba(255,255,255,0.1) 10%, transparent 10.5%)",
+            backgroundSize: "20px 20px",
+            opacity: 0.5,
+            zIndex: 1,
+          },
         }}
       >
-        <Container maxWidth="md">
-          <Box textAlign="center">
+        <Container maxWidth="md" sx={{ position: "relative", zIndex: 2 }}>
+          <Paper
+            elevation={10}
+            sx={{
+              p: { xs: 4, md: 6 },
+              textAlign: "center",
+              borderRadius: 4,
+              background:
+                theme.palette.mode === "light"
+                  ? "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 245, 255, 0.9) 100%)"
+                  : "linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)",
+              backdropFilter: "blur(20px)",
+              boxShadow: "0 25px 50px rgba(0,0,0,0.3)",
+              border:
+                theme.palette.mode === "light"
+                  ? "1px solid rgba(255, 255, 255, 0.8)"
+                  : "1px solid rgba(30, 41, 59, 0.5)",
+              position: "relative",
+              overflow: "hidden",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "5px",
+                background: "linear-gradient(90deg, #FF6B00 0%, #FF9248 100%)",
+              },
+            }}
+          >
             <Typography
-              variant="h3"
+              variant="h2"
               component="h2"
               fontWeight="bold"
-              sx={{ mb: 2 }}
+              sx={{
+                mb: 3,
+                background: "linear-gradient(90deg, #3563E9 0%, #6366F1 100%)",
+                backgroundClip: "text",
+                color: "transparent",
+                textShadow: "0 2px 10px rgba(53, 99, 233, 0.2)",
+                fontSize: { xs: "2.5rem", md: "3.5rem" },
+              }}
             >
               Ready to Get Started?
             </Typography>
             <Typography
-              variant="h6"
-              sx={{ mb: 4, opacity: 0.9, maxWidth: 700, mx: "auto" }}
+              variant="h5"
+              sx={{
+                mb: 5,
+                maxWidth: 700,
+                mx: "auto",
+                color:
+                  theme.palette.mode === "light"
+                    ? "text.secondary"
+                    : "text.primary",
+                fontWeight: 500,
+              }}
             >
               Join thousands of satisfied customers who use Next Ride every day
               for their transportation needs.
             </Typography>
-            <Button
-              component={Link}
-              to="/register"
-              variant="contained"
-              size="large"
-              sx={{
-                bgcolor: "secondary.main",
-                "&:hover": {
-                  bgcolor: "secondary.dark",
-                },
-                px: 4,
-                py: 1.5,
-              }}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={3}
+              justifyContent="center"
+              sx={{ mb: 2 }}
             >
-              Sign Up Now
-            </Button>
-          </Box>
+              <Button
+                component={Link}
+                to="/register"
+                variant="contained"
+                size="large"
+                startIcon={
+                  <Box
+                    sx={{
+                      bgcolor: "rgba(255, 255, 255, 0.2)",
+                      borderRadius: "50%",
+                      width: 36,
+                      height: 36,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <PersonAddIcon sx={{ fontSize: 20 }} />
+                  </Box>
+                }
+                sx={{
+                  bgcolor: "secondary.main",
+                  px: 5,
+                  py: 2,
+                  fontSize: "1.2rem",
+                  fontWeight: "bold",
+                  borderRadius: "50px",
+                  boxShadow: "0 15px 30px rgba(255, 107, 0, 0.4)",
+                  textTransform: "none",
+                  letterSpacing: "0.5px",
+                  position: "relative",
+                  overflow: "hidden",
+                  "&::before": {
+                    content: '""',
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)",
+                    transform: "translateX(-100%)",
+                    transition: "transform 0.8s ease",
+                  },
+                  "&:hover": {
+                    bgcolor: "secondary.dark",
+                    boxShadow: "0 20px 40px rgba(255, 107, 0, 0.6)",
+                    transform: "translateY(-7px) scale(1.05)",
+                    "&::before": {
+                      transform: "translateX(100%)",
+                    },
+                  },
+                  transition:
+                    "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+                }}
+              >
+                Sign Up Now
+              </Button>
+              <Button
+                component={Link}
+                to="/book-ride"
+                variant="outlined"
+                size="large"
+                startIcon={<DirectionsCarIcon sx={{ fontSize: 24 }} />}
+                sx={{
+                  px: 5,
+                  py: 2,
+                  fontSize: "1.2rem",
+                  fontWeight: "bold",
+                  borderRadius: "50px",
+                  borderWidth: 2,
+                  borderColor: "primary.main",
+                  color:
+                    theme.palette.mode === "light" ? "primary.main" : "white",
+                  textTransform: "none",
+                  letterSpacing: "0.5px",
+                  "&:hover": {
+                    borderWidth: 2,
+                    borderColor: "primary.main",
+                    bgcolor: "rgba(53, 99, 233, 0.1)",
+                    transform: "translateY(-7px) scale(1.05)",
+                  },
+                  transition:
+                    "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+                }}
+              >
+                Book a Ride
+              </Button>
+            </Stack>
+          </Paper>
         </Container>
       </Box>
 

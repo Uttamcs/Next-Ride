@@ -14,6 +14,7 @@ Next Ride is a full-stack vehicle rental application similar to Uber and Ola. It
 ## Tech Stack
 
 ### Backend
+
 - Node.js
 - Express.js
 - MongoDB
@@ -21,6 +22,7 @@ Next Ride is a full-stack vehicle rental application similar to Uber and Ola. It
 - JWT for authentication
 
 ### Frontend (To be implemented)
+
 - React.js
 - Redux for state management
 - Google Maps API for maps and location
@@ -53,18 +55,21 @@ Next Ride/
 ### Installation
 
 1. Clone the repository
+
    ```
    git clone https://github.com/yourusername/next-ride.git
    cd next-ride
    ```
 
 2. Install backend dependencies
+
    ```
    cd Backend
    npm install
    ```
 
 3. Create a `.env` file in the Backend directory (use `.env.example` as a template)
+
    ```
    cp .env.example .env
    ```

@@ -490,6 +490,7 @@ const Services = () => {
                                   ? "unset"
                                   : "transparent",
                               mr: 1,
+                              display: "inline-block", // Add this to fix the nesting issue
                             }}
                           >
                             {service.name}

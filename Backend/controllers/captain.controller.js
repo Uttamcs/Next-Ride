@@ -51,26 +51,54 @@ module.exports.registerCaptain = async (req, res) => {
 
 // Login captain
 module.exports.loginCaptain = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(401).json({ errors: errors.array() });
+  try {
+    console.log("Captain login attempt:", req.body);
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log("Validation errors:", errors.array());
+      return res.status(401).json({ errors: errors.array() });
+    }
+
+    const { email, password } = req.body;
+    console.log(`Looking for captain with email: ${email}`);
+
+    const captain = await captainModel.findOne({ email }).select("+password");
+
+    if (!captain) {
+      console.log(`No captain found with email: ${email}`);
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    console.log(`Captain found: ${captain._id}`);
+
+    console.log("Comparing passwords...");
+    const isMatch = await captain.comparePasswords(password);
+    console.log(`Password match result: ${isMatch}`);
+
+    if (!isMatch) {
+      console.log("Password does not match");
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    console.log("Generating token...");
+    const token = await captain.generateAuthToken();
+    console.log("Token generated successfully");
+
+    res.cookie("token", token);
+
+    // Remove password from response
+    const captainResponse = captain.toObject();
+    delete captainResponse.password;
+
+    console.log("Login successful");
+    res.status(200).json({ token, captain: captainResponse });
+  } catch (error) {
+    console.error("Error in loginCaptain:", error);
+    res
+      .status(500)
+      .json({ message: "Server error during login", error: error.message });
   }
-
-  const { email, password } = req.body;
-  const captain = await captainModel.findOne({ email }).select("+password");
-
-  if (!captain) {
-    return res.status(401).json({ message: "Invalid email or password" });
-  }
-
-  const isMatch = await captain.comparePasswords(password);
-  if (!isMatch) {
-    return res.status(401).json({ message: "Invalid email or password" });
-  }
-
-  const token = await captain.generateAuthToken();
-  res.cookie("token", token);
-  res.status(200).json({ token, captain });
 };
 
 // Get captain profile

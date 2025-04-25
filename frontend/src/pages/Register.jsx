@@ -153,12 +153,14 @@ const Register = () => {
 
       // Handle connection errors with more helpful messages
       if (
-        err.message &&
-        (err.message.includes("connect to server") ||
-          err.message.includes("No response from server"))
+        err.isConnectionError ||
+        (err.message &&
+          (err.message.includes("connect to server") ||
+            err.message.includes("No response from server") ||
+            err.message.includes("Network error")))
       ) {
         setServerError(
-          "Cannot connect to the server. Please make sure the backend server is running at http://localhost:3300"
+          "Cannot connect to the server. The application will work in offline mode."
         );
         setIsConnectionError(true);
         return;

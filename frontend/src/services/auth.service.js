@@ -3,43 +3,25 @@ import api from "./api";
 const AuthService = {
   login: async (email, password) => {
     try {
-      // Simulate API call
-      console.log("Simulating login for", email);
+      console.log("Logging in user with email:", email);
+      const response = await api.post("/users/login", { email, password });
 
-      // For demo purposes, any email/password combination works
-      const mockUser = {
-        _id: "user123",
-        fullname: {
-          firstName: email.split("@")[0],
-          lastName: "User",
-        },
-        email: email,
-        phone: "+1234567890",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      if (response.data && response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        localStorage.setItem("userType", "user"); // Store user type for role-based routing
+      }
 
-      const mockResponse = {
-        token: "mock-jwt-token-" + Date.now(),
-        user: mockUser,
-      };
-
-      localStorage.setItem("token", mockResponse.token);
-      localStorage.setItem("user", JSON.stringify(mockResponse.user));
-      localStorage.setItem("userType", "user"); // Store user type for role-based routing
-
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      return mockResponse;
+      return response.data;
     } catch (error) {
+      console.error("Login error:", error);
       throw error.response?.data || { message: "Login failed" };
     }
   },
 
   register: async (userData) => {
     try {
-      console.log("Simulating registration for", userData);
+      console.log("Registering user:", userData);
 
       // Transform the data structure to match backend expectations
       const nameParts = userData.name.split(" ");
@@ -49,25 +31,43 @@ const AuthService = {
         throw { message: "Please provide both first and last name" };
       }
 
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Return a successful response
-      return {
-        success: true,
-        message: "User registered successfully",
+      const requestData = {
+        firstName: nameParts[0],
+        lastName: nameParts.slice(1).join(" "),
+        email: userData.email,
+        password: userData.password,
+        phone: userData.phone || "",
       };
+
+      const response = await api.post("/users/signup", requestData);
+      return response.data;
     } catch (error) {
       console.error("Registration error:", error);
-      throw error.message ? error : { message: "Registration failed" };
+      throw error.response?.data || { message: "Registration failed" };
     }
   },
 
-  logout: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userType");
-    return api.post("/users/logout");
+  logout: async () => {
+    try {
+      // Make API call to logout
+      await api.get("/users/logout");
+
+      // Clear local storage
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("userType");
+
+      return { success: true, message: "Logged out successfully" };
+    } catch (error) {
+      console.error("Logout error:", error);
+
+      // Even if the API call fails, clear local storage
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("userType");
+
+      return { success: true, message: "Logged out successfully" };
+    }
   },
 
   getCurrentUser: () => {

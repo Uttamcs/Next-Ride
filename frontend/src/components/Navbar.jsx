@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCombinedAuth } from "../context/CombinedAuthContext";
 import { useThemeMode } from "../context/ThemeContext";
+import api from "../services/api";
 import {
   AppBar,
   Box,
@@ -35,6 +36,8 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import PaymentIcon from "@mui/icons-material/Payment";
 import HistoryIcon from "@mui/icons-material/History";
+import CloudOffIcon from "@mui/icons-material/CloudOff";
+import Chip from "@mui/material/Chip";
 
 // Hide navbar on scroll down, show on scroll up
 function HideOnScroll(props) {
@@ -57,6 +60,48 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifications, setNotifications] = useState(0);
   const [scrolled, setScrolled] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+
+  // Check if backend is available
+  useEffect(() => {
+    let isMounted = true;
+    let interval;
+
+    const checkBackendStatus = async () => {
+      if (!isMounted) return;
+
+      try {
+        // Use a simple fetch instead of the api.healthCheck to avoid circular dependencies
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch("http://localhost:3300/health", {
+          signal: controller.signal,
+        }).catch(() => null);
+
+        clearTimeout(timeoutId);
+
+        if (isMounted) {
+          setIsOffline(!response || !response.ok);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setIsOffline(true);
+        }
+      }
+    };
+
+    // Check immediately
+    checkBackendStatus();
+
+    // Then check every 30 seconds
+    interval = setInterval(checkBackendStatus, 30000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Handle scroll effect for navbar
   useEffect(() => {
@@ -160,10 +205,13 @@ const Navbar = () => {
               onClick={handleDrawerToggle}
             >
               <ListItemText
-                primary={item.name}
-                primaryTypographyProps={{
-                  fontWeight: isActive(item.path) ? 600 : 400,
-                }}
+                primary={
+                  <Typography
+                    sx={{ fontWeight: isActive(item.path) ? 600 : 400 }}
+                  >
+                    {item.name}
+                  </Typography>
+                }
               />
             </ListItemButton>
           </ListItem>
@@ -204,6 +252,14 @@ const Navbar = () => {
         )}
       </List>
       <Divider />
+      {isOffline && (
+        <Box sx={{ p: 2, display: "flex", alignItems: "center" }}>
+          <CloudOffIcon color="warning" fontSize="small" sx={{ mr: 1 }} />
+          <Typography variant="body2" color="warning.main">
+            Offline Mode
+          </Typography>
+        </Box>
+      )}
       <Box
         sx={{
           p: 2,
@@ -392,6 +448,17 @@ const Navbar = () => {
                   </Button>
                 ))}
               </Box>
+
+              {/* Offline mode indicator */}
+              {isOffline && (
+                <Chip
+                  icon={<CloudOffIcon fontSize="small" />}
+                  label="Offline Mode"
+                  color="warning"
+                  size="small"
+                  sx={{ mr: 2 }}
+                />
+              )}
 
               {/* Theme toggle button */}
               <Box sx={{ display: "flex", alignItems: "center" }}>

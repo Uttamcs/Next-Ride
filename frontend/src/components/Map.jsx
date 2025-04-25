@@ -41,36 +41,72 @@ const MapComponent = ({
 
       // Try to load the actual Google Maps API
       try {
-        console.log("Loading Google Maps API script");
+        console.log(
+          "Loading Google Maps API script with key:",
+          GOOGLE_MAPS_API_KEY
+            ? `${GOOGLE_MAPS_API_KEY.substring(0, 5)}...`
+            : "No API key found"
+        );
+
+        // Check if API key is available
+        if (!GOOGLE_MAPS_API_KEY) {
+          console.warn("No Google Maps API key found, using mock API");
+          injectMockGoogleMapsApi();
+          setMapLoaded(true);
+          return;
+        }
+
         const script = document.createElement("script");
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,geometry&callback=initGoogleMaps`;
         script.async = true;
         script.defer = true;
-        script.onload = () => {
-          console.log("Google Maps API loaded successfully");
+
+        // Define global callback function
+        window.initGoogleMaps = () => {
+          console.log("Google Maps API loaded successfully via callback");
           setMapLoaded(true);
+          // Clean up global callback
+          delete window.initGoogleMaps;
         };
+
+        script.onload = () => {
+          console.log("Google Maps API script loaded");
+          // The callback will handle setting mapLoaded to true
+        };
+
         script.onerror = (e) => {
           console.error("Failed to load Google Maps API:", e);
           console.log("Falling back to mock Google Maps API");
           // Inject mock Google Maps API
           injectMockGoogleMapsApi();
           setMapLoaded(true);
+          // Clean up global callback
+          delete window.initGoogleMaps;
         };
 
         // Set a timeout to fall back to mock API if loading takes too long
         const timeoutId = setTimeout(() => {
           if (!window.google || !window.google.maps) {
-            console.log("Google Maps API loading timed out, using mock API");
+            console.log(
+              "Google Maps API loading timed out after 8 seconds, using mock API"
+            );
             injectMockGoogleMapsApi();
             setMapLoaded(true);
+            // Clean up global callback
+            delete window.initGoogleMaps;
           }
-        }, 5000); // 5 second timeout
+        }, 8000); // 8 second timeout
 
         document.head.appendChild(script);
 
         // Clear timeout on cleanup
-        return () => clearTimeout(timeoutId);
+        return () => {
+          clearTimeout(timeoutId);
+          // Clean up global callback if it still exists
+          if (window.initGoogleMaps) {
+            delete window.initGoogleMaps;
+          }
+        };
       } catch (error) {
         console.error("Error loading Google Maps API:", error);
         // Fall back to mock API
@@ -151,91 +187,123 @@ const MapComponent = ({
 
   // Update map with route when origin and destination are set
   useEffect(() => {
-    if (!mapLoaded || !map || !directionsRenderer || !origin || !destination)
-      return;
-
-    calculateRouteInfo();
-
-    // Add markers for origin and destination
-    const originMarker = new window.google.maps.Marker({
-      position: { lat: origin.latitude, lng: origin.longitude },
-      map,
-      icon: {
-        url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
-        scaledSize: new window.google.maps.Size(40, 40),
-      },
-      title: "Pickup Location",
-    });
-
-    const destinationMarker = new window.google.maps.Marker({
-      position: { lat: destination.latitude, lng: destination.longitude },
-      map,
-      icon: {
-        url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-        scaledSize: new window.google.maps.Size(40, 40),
-      },
-      title: "Destination",
-    });
-
-    // Calculate and display route
-    const directionsService = new window.google.maps.DirectionsService();
-    directionsService.route(
-      {
-        origin: { lat: origin.latitude, lng: origin.longitude },
-        destination: { lat: destination.latitude, lng: destination.longitude },
-        travelMode: window.google.maps.TravelMode.DRIVING,
-      },
-      (result, status) => {
-        if (status === "OK") {
-          directionsRenderer.setDirections(result);
-
-          // Extract distance and duration from directions result
-          const route = result.routes[0];
-          if (route && route.legs && route.legs[0]) {
-            setDistance(route.legs[0].distance.text);
-            setDuration(route.legs[0].duration.text);
-          }
-        } else {
-          console.error("Directions request failed:", status);
-          // Fall back to simple calculation
-          calculateSimpleRouteInfo();
-        }
-      }
-    );
-
-    // Fit bounds to include both markers
-    const bounds = new window.google.maps.LatLngBounds();
-    bounds.extend({ lat: origin.latitude, lng: origin.longitude });
-    bounds.extend({ lat: destination.latitude, lng: destination.longitude });
-    map.fitBounds(bounds);
-
-    // Create an array to track all markers for cleanup
-    const markers = [originMarker, destinationMarker];
-
-    // Add captain marker if available
-    if (captainLocation) {
-      // Create captain marker and add to cleanup on unmount
-      const captainMarker = new window.google.maps.Marker({
-        position: {
-          lat: captainLocation.latitude,
-          lng: captainLocation.longitude,
-        },
-        map,
-        icon: {
-          url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-          scaledSize: new window.google.maps.Size(40, 40),
-        },
-        title: "Captain",
+    if (!mapLoaded || !map || !directionsRenderer) {
+      console.log("Map not ready yet:", {
+        mapLoaded,
+        mapExists: !!map,
+        directionsRendererExists: !!directionsRenderer,
       });
-
-      // Add to markers array for cleanup
-      markers.push(captainMarker);
+      return;
     }
 
-    // Cleanup function to remove all markers when component unmounts
-    return () => {
-      markers.forEach((marker) => marker.setMap(null));
-    };
+    if (!origin || !destination) {
+      console.log("Origin or destination not set:", { origin, destination });
+      return;
+    }
+
+    try {
+      console.log("Setting up route with:", {
+        origin: `${origin.latitude},${origin.longitude}`,
+        destination: `${destination.latitude},${destination.longitude}`,
+      });
+
+      calculateRouteInfo();
+
+      // Add markers for origin and destination
+      const originMarker = new window.google.maps.Marker({
+        position: { lat: origin.latitude, lng: origin.longitude },
+        map,
+        icon: {
+          url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
+          scaledSize: new window.google.maps.Size(40, 40),
+        },
+        title: "Pickup Location",
+      });
+
+      const destinationMarker = new window.google.maps.Marker({
+        position: { lat: destination.latitude, lng: destination.longitude },
+        map,
+        icon: {
+          url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+          scaledSize: new window.google.maps.Size(40, 40),
+        },
+        title: "Destination",
+      });
+
+      // Calculate and display route
+      const directionsService = new window.google.maps.DirectionsService();
+      directionsService.route(
+        {
+          origin: { lat: origin.latitude, lng: origin.longitude },
+          destination: {
+            lat: destination.latitude,
+            lng: destination.longitude,
+          },
+          travelMode: window.google.maps.TravelMode.DRIVING,
+        },
+        (result, status) => {
+          if (status === "OK") {
+            console.log("Route calculated successfully");
+            directionsRenderer.setDirections(result);
+
+            // Extract distance and duration from directions result
+            const route = result.routes[0];
+            if (route && route.legs && route.legs[0]) {
+              setDistance(route.legs[0].distance.text);
+              setDuration(route.legs[0].duration.text);
+              console.log("Route info:", {
+                distance: route.legs[0].distance.text,
+                duration: route.legs[0].duration.text,
+              });
+            }
+          } else {
+            console.error("Directions request failed:", status);
+            // Fall back to simple calculation
+            calculateSimpleRouteInfo();
+          }
+        }
+      );
+
+      // Fit bounds to include both markers
+      const bounds = new window.google.maps.LatLngBounds();
+      bounds.extend({ lat: origin.latitude, lng: origin.longitude });
+      bounds.extend({ lat: destination.latitude, lng: destination.longitude });
+      map.fitBounds(bounds);
+
+      // Create an array to track all markers for cleanup
+      const markers = [originMarker, destinationMarker];
+
+      // Add captain marker if available
+      if (captainLocation) {
+        console.log("Adding captain marker at:", captainLocation);
+        // Create captain marker and add to cleanup on unmount
+        const captainMarker = new window.google.maps.Marker({
+          position: {
+            lat: captainLocation.latitude,
+            lng: captainLocation.longitude,
+          },
+          map,
+          icon: {
+            url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            scaledSize: new window.google.maps.Size(40, 40),
+          },
+          title: "Captain",
+        });
+
+        // Add to markers array for cleanup
+        markers.push(captainMarker);
+      }
+
+      // Cleanup function to remove all markers when component unmounts
+      return () => {
+        console.log("Cleaning up map markers");
+        markers.forEach((marker) => marker.setMap(null));
+      };
+    } catch (error) {
+      console.error("Error setting up route:", error);
+      setError("Error setting up route. Using simple calculation instead.");
+      calculateSimpleRouteInfo();
+    }
   }, [
     mapLoaded,
     map,

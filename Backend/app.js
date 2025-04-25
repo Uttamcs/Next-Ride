@@ -47,6 +47,11 @@ app.get("/", (req, res) => {
   res.send("Welcome to Next Ride API");
 });
 
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "Server is running" });
+});
+
 // Routes
 app.use("/users", userRoutes);
 app.use("/captains", captainRoutes);

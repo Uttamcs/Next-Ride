@@ -3,47 +3,39 @@ import api from "./api";
 const CaptainAuthService = {
   login: async (email, password) => {
     try {
-      // Simulate API call
-      console.log("Simulating captain login for", email);
+      console.log("Logging in captain with email:", email);
 
-      // For demo purposes, any email/password combination works
-      const mockCaptain = {
-        _id: "captain123",
-        fullname: {
-          firstName: email.split("@")[0],
-          lastName: "Captain",
-        },
-        email: email,
-        phone: "+1234567890",
-        vehicleType: "Sedan",
-        vehicleNumber: "ABC-1234",
-        vehicleColor: "Black",
-        rating: 4.8,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      // Log the request payload for debugging
+      console.log("Captain login request payload:", { email, password });
 
-      const mockResponse = {
-        token: "mock-captain-jwt-token-" + Date.now(),
-        captain: mockCaptain,
-      };
+      const response = await api.post("/captains/login", { email, password });
+      console.log("Captain login response:", response.data);
 
-      localStorage.setItem("token", mockResponse.token);
-      localStorage.setItem("captain", JSON.stringify(mockResponse.captain));
-      localStorage.setItem("userType", "captain"); // Store user type for role-based routing
+      if (response.data && response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("captain", JSON.stringify(response.data.captain));
+        localStorage.setItem("userType", "captain"); // Store user type for role-based routing
+      }
 
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      return mockResponse;
+      return response.data;
     } catch (error) {
+      console.error("Captain login error:", error);
+      // Log more detailed error information
+      if (error.response) {
+        console.error("Error response data:", error.response.data);
+        console.error("Error response status:", error.response.status);
+      } else if (error.request) {
+        console.error("Error request:", error.request);
+      } else {
+        console.error("Error message:", error.message);
+      }
       throw error.response?.data || { message: "Login failed" };
     }
   },
 
   register: async (captainData) => {
     try {
-      console.log("Simulating captain registration for", captainData);
+      console.log("Registering captain:", captainData);
 
       // Format the data for the backend
       const formattedData = {
@@ -57,31 +49,42 @@ const CaptainAuthService = {
         vehicleNumber: captainData.vehicleNumber,
         vehicleColor: captainData.vehicleColor,
         capacity: captainData.capacity || 4, // Default capacity for cars
+        phone: captainData.phone || "",
         location: captainData.location || {
           latitude: 28.6139,
           longitude: 77.209,
         }, // Default to Delhi if not provided
       };
 
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Return a successful response
-      return {
-        success: true,
-        message: "Captain registered successfully",
-      };
+      const response = await api.post("/captains/signup", formattedData);
+      return response.data;
     } catch (error) {
       console.error("Captain registration error:", error);
-      throw error.message ? error : { message: "Registration failed" };
+      throw error.response?.data || { message: "Registration failed" };
     }
   },
 
-  logout: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("captain");
-    localStorage.removeItem("userType");
-    return api.post("/captains/logout");
+  logout: async () => {
+    try {
+      // Make API call to logout
+      await api.get("/captains/logout");
+
+      // Clear local storage
+      localStorage.removeItem("token");
+      localStorage.removeItem("captain");
+      localStorage.removeItem("userType");
+
+      return { success: true, message: "Logged out successfully" };
+    } catch (error) {
+      console.error("Logout error:", error);
+
+      // Even if the API call fails, clear local storage
+      localStorage.removeItem("token");
+      localStorage.removeItem("captain");
+      localStorage.removeItem("userType");
+
+      return { success: true, message: "Logged out successfully" };
+    }
   },
 
   getCurrentCaptain: () => {
@@ -94,12 +97,19 @@ const CaptainAuthService = {
 
   updateProfile: async (captainData) => {
     try {
+      console.log("Updating captain profile:", captainData);
+
+      // Make API call to update profile
       const response = await api.put("/captains/profile", captainData);
-      if (response.data.captain) {
+
+      // Update local storage with the updated captain data
+      if (response.data && response.data.captain) {
         localStorage.setItem("captain", JSON.stringify(response.data.captain));
       }
+
       return response.data;
     } catch (error) {
+      console.error("Profile update error:", error);
       throw error.response?.data || { message: "Profile update failed" };
     }
   },
