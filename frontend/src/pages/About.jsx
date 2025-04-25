@@ -9,6 +9,7 @@ import {
   Card,
   CardContent,
   Button,
+  useMediaQuery,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import {
@@ -26,9 +27,41 @@ import {
 } from "@mui/icons-material";
 import heroCarImage from "../assets/images/hero-car.svg";
 import { useTheme } from "@mui/material/styles";
+import MapComponent from "../components/MapComponent";
+import {
+  GOOGLE_MAPS_API_KEY,
+  DEFAULT_MAP_CENTER,
+  DEFAULT_MAP_ZOOM,
+} from "../config";
 
 const About = () => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  // Office locations to display on the map
+  const officeLocations = [
+    {
+      lat: 28.6139,
+      lng: 77.209,
+      title: "NextDrive Headquarters",
+      description: "Our main office in New Delhi",
+      address: "123 Tech Park, New Delhi, India",
+    },
+    {
+      lat: 19.076,
+      lng: 72.8777,
+      title: "Mumbai Office",
+      description: "Our branch in Mumbai",
+      address: "456 Business Hub, Mumbai, India",
+    },
+    {
+      lat: 12.9716,
+      lng: 77.5946,
+      title: "Bangalore Office",
+      description: "Our tech center in Bangalore",
+      address: "789 Innovation Center, Bangalore, India",
+    },
+  ];
 
   const features = [
     {
@@ -652,6 +685,101 @@ const About = () => {
           </Box>
         </Container>
       </Box>
+
+      {/* Office Locations Map Section */}
+      <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Typography
+          variant="h3"
+          component="h2"
+          fontWeight="bold"
+          textAlign="center"
+          gutterBottom
+        >
+          Our Locations
+        </Typography>
+        <Typography
+          variant="h6"
+          textAlign="center"
+          color="text.secondary"
+          sx={{ mb: 6, maxWidth: 800, mx: "auto" }}
+        >
+          Find NextDrive offices across India
+        </Typography>
+
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={7}>
+            <MapComponent
+              apiKey={GOOGLE_MAPS_API_KEY}
+              locations={officeLocations}
+              center={
+                isMobile ? { lat: 22.5937, lng: 78.9629 } : DEFAULT_MAP_CENTER
+              }
+              zoom={isMobile ? 4 : DEFAULT_MAP_ZOOM}
+              height="500px"
+              showInfoWindow={true}
+            />
+          </Grid>
+          <Grid item xs={12} md={5}>
+            <Paper elevation={3} sx={{ p: 3, height: "100%", borderRadius: 2 }}>
+              <Typography variant="h5" fontWeight="bold" gutterBottom>
+                Visit Our Offices
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                NextDrive is expanding across India to serve you better. Our
+                offices are strategically located in major cities to ensure we
+                can provide the best service to our customers and partners.
+              </Typography>
+
+              <Box sx={{ mt: 4 }}>
+                {officeLocations.map((office, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      mb: 3,
+                      pb: 3,
+                      borderBottom:
+                        index !== officeLocations.length - 1 ? 1 : 0,
+                      borderColor: "divider",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      fontWeight="bold"
+                      color="primary.main"
+                    >
+                      {office.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      {office.description}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <LocationOn
+                        fontSize="small"
+                        sx={{ verticalAlign: "middle", mr: 0.5 }}
+                      />
+                      {office.address}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+
+              <Typography variant="body1" sx={{ mt: 2 }}>
+                Want to join our team? Check out our{" "}
+                <Link
+                  to="/careers"
+                  style={{
+                    color: theme.palette.primary.main,
+                    fontWeight: "bold",
+                  }}
+                >
+                  careers page
+                </Link>{" "}
+                for opportunities.
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
 
       {/* Mission Section */}
       <Box
